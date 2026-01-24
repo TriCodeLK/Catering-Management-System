@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Users, DollarSign, Clock, Bell, Search } from 'lucide-react';
 import Sidebar from './components/Sidebar';
+import './index.css'
 
 // --- MOCK DATA ---
 const EVENTS = [
