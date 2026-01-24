@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2 } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2 } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
 // --- MOCK DATA FOR DASHBOARD ---
@@ -63,12 +63,20 @@ const EventRow = ({ event }) => (
 
 export default function CateringApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // State for Packages List
   const [packages, setPackages] = useState(INITIAL_PACKAGES);
+  
+  // State for Modal Visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // State for New Package Form
   const [newPackage, setNewPackage] = useState({ name: '', price: '', description: '' });
 
+  // Function to handle adding a new package
   const handleAddPackage = (e) => {
     e.preventDefault();
+    
     const packageToAdd = {
       id: Date.now(),
       name: newPackage.name,
@@ -77,15 +85,17 @@ export default function CateringApp() {
       image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1000",
       tag: "New"
     };
+
     setPackages([...packages, packageToAdd]);
     setIsModalOpen(false);
     setNewPackage({ name: '', price: '', description: '' });
   };
 
-  // --- NEW: DELETE FUNCTION ---
+  // Function to Delete Package
   const handleDeletePackage = (id) => {
-    if (window.confirm("Are you sure you want to delete this package?")) {
-        setPackages(packages.filter(pkg => pkg.id !== id));
+    if(window.confirm("Are you sure you want to delete this package?")) {
+        const updatedPackages = packages.filter((pkg) => pkg.id !== id);
+        setPackages(updatedPackages);
     }
   };
 
@@ -158,8 +168,9 @@ export default function CateringApp() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Dynamic Package Cards */}
               {packages.map((pkg) => (
-                <div key={pkg.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer relative">
+                <div key={pkg.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
                   <div className="h-48 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
                     <img 
                       src={pkg.image}
@@ -181,20 +192,17 @@ export default function CateringApp() {
                             <p className="text-xs text-gray-400">Starting from</p>
                             <span className="font-bold text-xl text-primary">${pkg.price}<span className="text-xs text-gray-400 font-normal"> /head</span></span>
                         </div>
+                        
                         <div className="flex gap-2">
-                            {/* Delete Button */}
                             <button 
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevent card click
-                                    handleDeletePackage(pkg.id);
-                                }}
+                                onClick={() => handleDeletePackage(pkg.id)}
                                 className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
                                 title="Delete Package"
                             >
                                 <Trash2 size={18} />
                             </button>
-                            <button className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors">
-                                Edit
+                            <button className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors">
+                                <Edit2 size={18} />
                             </button>
                         </div>
                       </div>
@@ -202,6 +210,7 @@ export default function CateringApp() {
                 </div>
               ))}
 
+              {/* Add New Placeholder */}
               <div 
                 onClick={() => setIsModalOpen(true)}
                 className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer min-h-[400px]"
