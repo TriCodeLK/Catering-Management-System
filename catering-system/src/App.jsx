@@ -71,24 +71,56 @@ export default function CateringApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // State for New Package Form
-  const [newPackage, setNewPackage] = useState({ name: '', price: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', price: '', description: '' });
 
-  // Function to handle adding a new package
-  const handleAddPackage = (e) => {
+  // NEW: State to track which item is being edited (null means we are adding new)
+  const [editingId, setEditingId] = useState(null);
+
+  // Function to Open Modal for Adding
+  const handleOpenAddModal = () => {
+    setEditingId(null); // Not editing
+    setFormData({ name: '', price: '', description: '' }); // Clear form
+    setIsModalOpen(true);
+  };
+
+  // NEW: Function to Open Modal for Editing
+  const handleEditClick = (pkg) => {
+    setEditingId(pkg.id); // Set the ID being edited
+    setFormData({ 
+        name: pkg.name, 
+        price: pkg.price, 
+        description: pkg.description 
+    }); // Fill form with existing data
+    setIsModalOpen(true);
+  };
+
+  // Function to Save (Create OR Update)
+  const handleSavePackage = (e) => {
     e.preventDefault();
     
-    const packageToAdd = {
-      id: Date.now(),
-      name: newPackage.name,
-      price: newPackage.price,
-      description: newPackage.description,
-      image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1000",
-      tag: "New"
-    };
+    if (editingId) {
+        // --- UPDATE MODE ---
+        const updatedPackages = packages.map((pkg) => {
+            if (pkg.id === editingId) {
+                return { ...pkg, ...formData }; // Keep original image/id, update text
+            }
+            return pkg;
+        });
+        setPackages(updatedPackages);
+    } else {
+        // --- CREATE MODE ---
+        const packageToAdd = {
+            id: Date.now(),
+            ...formData,
+            image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1000",
+            tag: "New"
+        };
+        setPackages([...packages, packageToAdd]);
+    }
 
-    setPackages([...packages, packageToAdd]);
     setIsModalOpen(false);
-    setNewPackage({ name: '', price: '', description: '' });
+    setFormData({ name: '', price: '', description: '' });
+    setEditingId(null);
   };
 
   // Function to Delete Package
@@ -160,7 +192,7 @@ export default function CateringApp() {
                 <p className="text-sm text-gray-500">Manage your food packages and pricing</p>
               </div>
               <button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleOpenAddModal}
                 className="bg-primary hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-primary/30"
               >
                 <span>+ Create Package</span>
@@ -201,7 +233,11 @@ export default function CateringApp() {
                             >
                                 <Trash2 size={18} />
                             </button>
-                            <button className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors">
+                            <button 
+                                onClick={() => handleEditClick(pkg)}
+                                className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                                title="Edit Package"
+                            >
                                 <Edit2 size={18} />
                             </button>
                         </div>
@@ -212,7 +248,7 @@ export default function CateringApp() {
 
               {/* Add New Placeholder */}
               <div 
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleOpenAddModal}
                 className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer min-h-[400px]"
               >
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-white">
@@ -242,13 +278,15 @@ export default function CateringApp() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-800">Add New Package</h3>
+              <h3 className="text-xl font-bold text-gray-800">
+                {editingId ? 'Edit Package' : 'Add New Package'}
+              </h3>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleAddPackage} className="space-y-4">
+            <form onSubmit={handleSavePackage} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
                 <input 
@@ -256,8 +294,8 @@ export default function CateringApp() {
                   required
                   className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   placeholder="e.g. Silver Dinner Set"
-                  value={newPackage.name}
-                  onChange={(e) => setNewPackage({...newPackage, name: e.target.value})}
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
               </div>
 
@@ -268,8 +306,8 @@ export default function CateringApp() {
                   required
                   className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   placeholder="0.00"
-                  value={newPackage.price}
-                  onChange={(e) => setNewPackage({...newPackage, price: e.target.value})}
+                  value={formData.price}
+                  onChange={(e) => setFormData({...formData, price: e.target.value})}
                 />
               </div>
 
@@ -279,8 +317,8 @@ export default function CateringApp() {
                   required
                   className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-24"
                   placeholder="What is included in this package?"
-                  value={newPackage.description}
-                  onChange={(e) => setNewPackage({...newPackage, description: e.target.value})}
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
                 ></textarea>
               </div>
 
@@ -296,7 +334,7 @@ export default function CateringApp() {
                   type="submit" 
                   className="flex-1 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-primary/30"
                 >
-                  Save Package
+                  {editingId ? 'Update Package' : 'Save Package'}
                 </button>
               </div>
             </form>
