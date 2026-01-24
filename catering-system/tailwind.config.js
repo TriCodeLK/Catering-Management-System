@@ -7,11 +7,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#C4A484', // Gold/Brown
-        secondary: '#2C3E50', // Navy Blue
-      },
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        primary: '#f97316',   // Orange color
+        secondary: '#1f2937', // Dark gray/black
       }
     },
   },
