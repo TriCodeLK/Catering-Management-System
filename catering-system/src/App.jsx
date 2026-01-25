@@ -157,7 +157,6 @@ export default function CateringApp() {
 
   // -- ORDER FUNCTIONS --
   
-  // 1. Function to Change Status
   const handleStatusChange = (id, newStatus) => {
     const updatedOrders = orders.map(order => 
         order.id === id ? { ...order, status: newStatus } : order
@@ -165,7 +164,14 @@ export default function CateringApp() {
     setOrders(updatedOrders);
   };
 
-  // 2. Helper to get colors for dropdown
+  // NEW: Delete Order Function
+  const handleDeleteOrder = (id) => {
+    if(window.confirm("Are you sure you want to delete this order?")) {
+        const updatedOrders = orders.filter((order) => order.id !== id);
+        setOrders(updatedOrders);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch(status) {
         case 'Confirmed': return 'bg-green-100 text-green-700 border-green-200 focus:ring-green-500';
@@ -257,7 +263,7 @@ export default function CateringApp() {
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto pb-4"> {/* Added padding bottom for dropdown space */}
+                    <div className="overflow-x-auto pb-4">
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider font-semibold">
                                 <tr>
@@ -290,7 +296,6 @@ export default function CateringApp() {
                                         </td>
                                         <td className="py-4 px-6 text-sm text-gray-500">{order.date}</td>
                                         
-                                        {/* --- DROPDOWN STATUS --- */}
                                         <td className="py-4 px-6">
                                             <div className="relative">
                                                 <select
@@ -311,9 +316,14 @@ export default function CateringApp() {
                                         <td className="py-4 px-6 text-right font-bold text-gray-800">
                                             ${order.total.toLocaleString()}
                                         </td>
-                                        <td className="py-4 px-6 text-center">
-                                            <button className="text-gray-400 hover:text-primary transition-colors">
-                                                <Edit2 size={16} />
+                                        <td className="py-4 px-6 text-center flex items-center justify-center gap-2">
+                                            {/* Delete Button */}
+                                            <button 
+                                                onClick={() => handleDeleteOrder(order.id)}
+                                                className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                                                title="Delete Order"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         </td>
                                     </tr>
