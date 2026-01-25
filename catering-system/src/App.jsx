@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2 } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
 // --- MOCK DATA FOR DASHBOARD ---
@@ -63,67 +63,74 @@ const EventRow = ({ event }) => (
 
 export default function CateringApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  // State for Packages List
   const [packages, setPackages] = useState(INITIAL_PACKAGES);
-  
-  // State for Modal Visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // State for New Package Form
-  const [formData, setFormData] = useState({ name: '', price: '', description: '' });
-
-  // NEW: State to track which item is being edited (null means we are adding new)
+  
+  // State for Form (Now includes image property)
+  const [formData, setFormData] = useState({ name: '', price: '', description: '', image: '' });
   const [editingId, setEditingId] = useState(null);
 
-  // Function to Open Modal for Adding
+  // Open Modal for Adding
   const handleOpenAddModal = () => {
-    setEditingId(null); // Not editing
-    setFormData({ name: '', price: '', description: '' }); // Clear form
+    setEditingId(null);
+    setFormData({ name: '', price: '', description: '', image: '' });
     setIsModalOpen(true);
   };
 
-  // NEW: Function to Open Modal for Editing
+  // Open Modal for Editing
   const handleEditClick = (pkg) => {
-    setEditingId(pkg.id); // Set the ID being edited
+    setEditingId(pkg.id);
     setFormData({ 
         name: pkg.name, 
         price: pkg.price, 
-        description: pkg.description 
-    }); // Fill form with existing data
+        description: pkg.description,
+        image: pkg.image // Load existing image
+    });
     setIsModalOpen(true);
   };
 
-  // Function to Save (Create OR Update)
+  // Handle Image Upload
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create a temporary URL for the uploaded file
+      const imageUrl = URL.createObjectURL(file);
+      setFormData({ ...formData, image: imageUrl });
+    }
+  };
+
+  // Save Package
   const handleSavePackage = (e) => {
     e.preventDefault();
     
+    // Default image if none uploaded
+    const finalImage = formData.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1000";
+
     if (editingId) {
-        // --- UPDATE MODE ---
+        // Update Mode
         const updatedPackages = packages.map((pkg) => {
             if (pkg.id === editingId) {
-                return { ...pkg, ...formData }; // Keep original image/id, update text
+                return { ...pkg, ...formData, image: finalImage };
             }
             return pkg;
         });
         setPackages(updatedPackages);
     } else {
-        // --- CREATE MODE ---
+        // Create Mode
         const packageToAdd = {
             id: Date.now(),
             ...formData,
-            image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1000",
+            image: finalImage,
             tag: "New"
         };
         setPackages([...packages, packageToAdd]);
     }
 
     setIsModalOpen(false);
-    setFormData({ name: '', price: '', description: '' });
+    setFormData({ name: '', price: '', description: '', image: '' });
     setEditingId(null);
   };
 
-  // Function to Delete Package
   const handleDeletePackage = (id) => {
     if(window.confirm("Are you sure you want to delete this package?")) {
         const updatedPackages = packages.filter((pkg) => pkg.id !== id);
@@ -136,7 +143,6 @@ export default function CateringApp() {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 md:ml-64 p-8 relative">
-        {/* Header */}
         <header className="flex justify-between items-center mb-10">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Welcome back, Admin 👋</h2>
@@ -147,7 +153,6 @@ export default function CateringApp() {
           </button>
         </header>
 
-        {/* --- DASHBOARD TAB --- */}
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -183,7 +188,6 @@ export default function CateringApp() {
           </div>
         )}
 
-        {/* --- MENU PACKAGES TAB --- */}
         {activeTab === 'menu' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center mb-6">
@@ -200,7 +204,6 @@ export default function CateringApp() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Dynamic Package Cards */}
               {packages.map((pkg) => (
                 <div key={pkg.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
                   <div className="h-48 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
@@ -246,7 +249,6 @@ export default function CateringApp() {
                 </div>
               ))}
 
-              {/* Add New Placeholder */}
               <div 
                 onClick={handleOpenAddModal}
                 className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer min-h-[400px]"
@@ -260,7 +262,6 @@ export default function CateringApp() {
           </div>
         )}
 
-        {/* --- COMING SOON --- */}
         {activeTab !== 'dashboard' && activeTab !== 'menu' && (
           <div className="flex flex-col items-center justify-center h-96 text-gray-400 animate-in fade-in duration-500">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -276,7 +277,7 @@ export default function CateringApp() {
       {/* --- POPUP MODAL --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-gray-800">
                 {editingId ? 'Edit Package' : 'Add New Package'}
@@ -287,6 +288,34 @@ export default function CateringApp() {
             </div>
             
             <form onSubmit={handleSavePackage} className="space-y-4">
+              {/* Image Upload Field */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Package Image</label>
+                <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                        {formData.image ? (
+                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <ImageIcon size={24} />
+                            </div>
+                        )}
+                    </div>
+                    <label className="flex-1 cursor-pointer">
+                        <input 
+                            type="file" 
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                        />
+                        <div className="flex items-center justify-center gap-2 w-full py-2 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:text-primary hover:bg-primary/5 transition-all text-gray-500 text-sm font-medium">
+                            <Upload size={16} />
+                            <span>Upload Photo</span>
+                        </div>
+                    </label>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
                 <input 
