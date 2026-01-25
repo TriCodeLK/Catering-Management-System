@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon, Filter, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon, Filter, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
-// --- INITIAL DATA (Used only if LocalStorage is empty) ---
+// --- INITIAL DATA ---
 const INITIAL_PACKAGES = [
   { 
     id: 1, 
@@ -69,7 +69,6 @@ export default function CateringApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   // -- LOCAL STORAGE INITIALIZATION --
-  // We check LocalStorage first. If empty, use INITIAL data.
   const [packages, setPackages] = useState(() => {
     const savedPackages = localStorage.getItem('catering_packages');
     return savedPackages ? JSON.parse(savedPackages) : INITIAL_PACKAGES;
@@ -85,8 +84,7 @@ export default function CateringApp() {
   const [editingId, setEditingId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('All');
 
-  // -- SAVE TO LOCAL STORAGE EFFECT --
-  // Whenever 'packages' or 'orders' change, we save them to the browser.
+  // -- SAVE TO LOCAL STORAGE --
   useEffect(() => {
     localStorage.setItem('catering_packages', JSON.stringify(packages));
   }, [packages]);
@@ -113,13 +111,12 @@ export default function CateringApp() {
     setIsModalOpen(true);
   };
 
-  // UPDATED: Convert Image to Base64 (Text) so it persists after refresh
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result }); // Save as Base64 string
+        setFormData({ ...formData, image: reader.result });
       };
       reader.readAsDataURL(file);
     }
@@ -158,12 +155,22 @@ export default function CateringApp() {
     }
   };
 
-  // -- ORDER HELPERS --
+  // -- ORDER FUNCTIONS --
+  
+  // 1. Function to Change Status
+  const handleStatusChange = (id, newStatus) => {
+    const updatedOrders = orders.map(order => 
+        order.id === id ? { ...order, status: newStatus } : order
+    );
+    setOrders(updatedOrders);
+  };
+
+  // 2. Helper to get colors for dropdown
   const getStatusColor = (status) => {
     switch(status) {
-        case 'Confirmed': return 'bg-green-100 text-green-700 border-green-200';
-        case 'Pending': return 'bg-orange-100 text-orange-700 border-orange-200';
-        case 'Completed': return 'bg-blue-100 text-blue-700 border-blue-200';
+        case 'Confirmed': return 'bg-green-100 text-green-700 border-green-200 focus:ring-green-500';
+        case 'Pending': return 'bg-orange-100 text-orange-700 border-orange-200 focus:ring-orange-500';
+        case 'Completed': return 'bg-blue-100 text-blue-700 border-blue-200 focus:ring-blue-500';
         default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -250,7 +257,7 @@ export default function CateringApp() {
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto pb-4"> {/* Added padding bottom for dropdown space */}
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider font-semibold">
                                 <tr>
@@ -282,13 +289,25 @@ export default function CateringApp() {
                                             </div>
                                         </td>
                                         <td className="py-4 px-6 text-sm text-gray-500">{order.date}</td>
+                                        
+                                        {/* --- DROPDOWN STATUS --- */}
                                         <td className="py-4 px-6">
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
-                                                {order.status === 'Pending' && <AlertCircle size={12} />}
-                                                {order.status === 'Confirmed' && <CheckCircle size={12} />}
-                                                {order.status}
-                                            </span>
+                                            <div className="relative">
+                                                <select
+                                                    value={order.status}
+                                                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                                    className={`appearance-none pl-3 pr-8 py-1.5 rounded-full text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all ${getStatusColor(order.status)}`}
+                                                >
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="Confirmed">Confirmed</option>
+                                                    <option value="Completed">Completed</option>
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-1">
+                                                    <ChevronDown size={14} className={`opacity-50 ${order.status === 'Pending' ? 'text-orange-700' : order.status === 'Confirmed' ? 'text-green-700' : 'text-blue-700'}`} />
+                                                </div>
+                                            </div>
                                         </td>
+
                                         <td className="py-4 px-6 text-right font-bold text-gray-800">
                                             ${order.total.toLocaleString()}
                                         </td>
