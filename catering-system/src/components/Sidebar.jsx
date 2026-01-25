@@ -4,22 +4,24 @@ import { LayoutDashboard, FileText, Utensils, Calendar, Settings, ChevronLeft, C
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'orders', label: 'Events', icon: Calendar }, // Changed label to match design
+    { id: 'orders', label: 'Events', icon: Calendar },
     { id: 'menu', label: 'Menu', icon: Utensils },
-    { id: 'clients', label: 'Clients', icon: FileText }, // Added to match design
+    { id: 'clients', label: 'Clients', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <aside className="w-64 bg-[#1C1C1E] text-white hidden md:flex flex-col h-screen fixed left-0 top-0 z-50">
+    // CHANGE: Used 'bg-gray-900' instead of custom hex to ensure it works
+    <aside className="w-64 bg-gray-900 text-white hidden md:flex flex-col h-screen fixed left-0 top-0 z-50">
       {/* Logo Area */}
       <div className="p-8 flex items-center gap-3">
+        {/* CHANGE: Used 'bg-orange-500' */}
         <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
             <Utensils size={20} className="text-white" />
         </div>
         <div>
           <h1 className="text-xl font-medium tracking-wide">CaterPro</h1>
-          <p className="text-xs text-gray-500">Catering Management</p>
+          <p className="text-xs text-gray-400">Catering Management</p>
         </div>
       </div>
       
@@ -34,8 +36,8 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 ${
                 isActive 
-                  ? 'bg-[#F97316] text-white shadow-lg shadow-orange-500/20' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/20' 
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`}
             >
               <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
@@ -45,20 +47,20 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         })}
       </nav>
 
-      {/* Upgrade Card (Matching Design) */}
-      <div className="p-4 mx-4 mb-6 bg-[#2C2C2E] rounded-2xl border border-white/5">
+      {/* Upgrade Card */}
+      <div className="p-4 mx-4 mb-6 bg-gray-800 rounded-2xl border border-gray-700">
         <div className="flex items-center gap-2 text-orange-400 mb-2">
             <Crown size={16} />
             <span className="text-xs font-bold uppercase tracking-wider">Upgrade to Pro</span>
         </div>
-        <p className="text-xs text-gray-400 mb-3 leading-relaxed">Unlock advanced features and analytics for your business.</p>
-        <button className="w-full py-2 bg-[#F97316] hover:bg-orange-600 text-white text-xs font-bold rounded-lg transition-colors">
+        <p className="text-xs text-gray-400 mb-3 leading-relaxed">Unlock advanced features and analytics.</p>
+        <button className="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-lg transition-colors">
             Upgrade Now
         </button>
       </div>
 
       {/* Collapse Button */}
-      <button className="p-4 flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm font-medium border-t border-white/5">
+      <button className="p-4 flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm font-medium border-t border-gray-800">
         <ChevronLeft size={18} />
         <span>Collapse</span>
       </button>
