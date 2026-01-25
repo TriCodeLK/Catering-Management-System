@@ -1,15 +1,8 @@
-import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon, Filter, CheckCircle, AlertCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
-// --- MOCK DATA FOR DASHBOARD ---
-const EVENTS = [
-  { id: 1, client: "Smith Wedding", date: "2026-02-15", guests: 150, status: "Confirmed", type: "Wedding", revenue: 5000 },
-  { id: 2, client: "Tech Corp Annual", date: "2026-02-20", guests: 300, status: "Pending", type: "Corporate", revenue: 8500 },
-  { id: 3, client: "Jenny's 18th", date: "2026-03-05", guests: 50, status: "Confirmed", type: "Birthday", revenue: 1200 },
-];
-
-// --- INITIAL PACKAGES DATA ---
+// --- INITIAL DATA (Used only if LocalStorage is empty) ---
 const INITIAL_PACKAGES = [
   { 
     id: 1, 
@@ -27,6 +20,17 @@ const INITIAL_PACKAGES = [
     image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1000",
     tag: "Healthy"
   }
+];
+
+const INITIAL_ORDERS = [
+    { id: "ORD-001", customer: "Kasun Perera", date: "2026-02-10", package: "Gold Wedding Buffet", pax: 150, status: "Pending", total: 6750 },
+    { id: "ORD-002", customer: "SoftLogic Inc", date: "2026-02-12", package: "Corporate Lunch Box", pax: 45, status: "Confirmed", total: 900 },
+];
+
+const EVENTS = [
+  { id: 1, client: "Smith Wedding", date: "2026-02-15", guests: 150, status: "Confirmed", type: "Wedding", revenue: 5000 },
+  { id: 2, client: "Tech Corp Annual", date: "2026-02-20", guests: 300, status: "Pending", type: "Corporate", revenue: 8500 },
+  { id: 3, client: "Jenny's 18th", date: "2026-03-05", guests: 50, status: "Confirmed", type: "Birthday", revenue: 1200 },
 ];
 
 // Helper Components
@@ -63,51 +67,69 @@ const EventRow = ({ event }) => (
 
 export default function CateringApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [packages, setPackages] = useState(INITIAL_PACKAGES);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // State for Form (Now includes image property)
+  // -- LOCAL STORAGE INITIALIZATION --
+  // We check LocalStorage first. If empty, use INITIAL data.
+  const [packages, setPackages] = useState(() => {
+    const savedPackages = localStorage.getItem('catering_packages');
+    return savedPackages ? JSON.parse(savedPackages) : INITIAL_PACKAGES;
+  });
+
+  const [orders, setOrders] = useState(() => {
+    const savedOrders = localStorage.getItem('catering_orders');
+    return savedOrders ? JSON.parse(savedOrders) : INITIAL_ORDERS;
+  });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', price: '', description: '', image: '' });
   const [editingId, setEditingId] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('All');
 
-  // Open Modal for Adding
+  // -- SAVE TO LOCAL STORAGE EFFECT --
+  // Whenever 'packages' or 'orders' change, we save them to the browser.
+  useEffect(() => {
+    localStorage.setItem('catering_packages', JSON.stringify(packages));
+  }, [packages]);
+
+  useEffect(() => {
+    localStorage.setItem('catering_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  // -- MENU FUNCTIONS --
   const handleOpenAddModal = () => {
     setEditingId(null);
     setFormData({ name: '', price: '', description: '', image: '' });
     setIsModalOpen(true);
   };
 
-  // Open Modal for Editing
   const handleEditClick = (pkg) => {
     setEditingId(pkg.id);
     setFormData({ 
         name: pkg.name, 
         price: pkg.price, 
         description: pkg.description,
-        image: pkg.image // Load existing image
+        image: pkg.image 
     });
     setIsModalOpen(true);
   };
 
-  // Handle Image Upload
+  // UPDATED: Convert Image to Base64 (Text) so it persists after refresh
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Create a temporary URL for the uploaded file
-      const imageUrl = URL.createObjectURL(file);
-      setFormData({ ...formData, image: imageUrl });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, image: reader.result }); // Save as Base64 string
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // Save Package
   const handleSavePackage = (e) => {
     e.preventDefault();
-    
-    // Default image if none uploaded
     const finalImage = formData.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1000";
 
     if (editingId) {
-        // Update Mode
         const updatedPackages = packages.map((pkg) => {
             if (pkg.id === editingId) {
                 return { ...pkg, ...formData, image: finalImage };
@@ -116,7 +138,6 @@ export default function CateringApp() {
         });
         setPackages(updatedPackages);
     } else {
-        // Create Mode
         const packageToAdd = {
             id: Date.now(),
             ...formData,
@@ -125,7 +146,6 @@ export default function CateringApp() {
         };
         setPackages([...packages, packageToAdd]);
     }
-
     setIsModalOpen(false);
     setFormData({ name: '', price: '', description: '', image: '' });
     setEditingId(null);
@@ -137,6 +157,20 @@ export default function CateringApp() {
         setPackages(updatedPackages);
     }
   };
+
+  // -- ORDER HELPERS --
+  const getStatusColor = (status) => {
+    switch(status) {
+        case 'Confirmed': return 'bg-green-100 text-green-700 border-green-200';
+        case 'Pending': return 'bg-orange-100 text-orange-700 border-orange-200';
+        case 'Completed': return 'bg-blue-100 text-blue-700 border-blue-200';
+        default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const filteredOrders = filterStatus === 'All' 
+    ? orders 
+    : orders.filter(order => order.status === filterStatus);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex">
@@ -153,6 +187,7 @@ export default function CateringApp() {
           </button>
         </header>
 
+        {/* --- DASHBOARD TAB --- */}
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -188,6 +223,96 @@ export default function CateringApp() {
           </div>
         )}
 
+        {/* --- ORDERS TAB --- */}
+        {activeTab === 'orders' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h3 className="font-bold text-xl text-gray-800">Order Management</h3>
+                        <p className="text-sm text-gray-500">Track and manage your catering orders</p>
+                    </div>
+                    
+                    <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                        {['All', 'Pending', 'Confirmed', 'Completed'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setFilterStatus(status)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    filterStatus === status 
+                                    ? 'bg-secondary text-white shadow-md' 
+                                    : 'text-gray-500 hover:bg-gray-50'
+                                }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                                <tr>
+                                    <th className="py-4 px-6">Order ID</th>
+                                    <th className="py-4 px-6">Customer</th>
+                                    <th className="py-4 px-6">Package Details</th>
+                                    <th className="py-4 px-6">Date</th>
+                                    <th className="py-4 px-6">Status</th>
+                                    <th className="py-4 px-6 text-right">Total Amount</th>
+                                    <th className="py-4 px-6 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredOrders.map((order) => (
+                                    <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                        <td className="py-4 px-6 font-medium text-gray-900">{order.id}</td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                                    {order.customer.charAt(0)}
+                                                </div>
+                                                <span className="text-gray-700 font-medium">{order.customer}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <p className="text-gray-800 font-medium">{order.package}</p>
+                                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                <Users size={12} /> {order.pax} Pax
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-6 text-sm text-gray-500">{order.date}</td>
+                                        <td className="py-4 px-6">
+                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
+                                                {order.status === 'Pending' && <AlertCircle size={12} />}
+                                                {order.status === 'Confirmed' && <CheckCircle size={12} />}
+                                                {order.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-right font-bold text-gray-800">
+                                            ${order.total.toLocaleString()}
+                                        </td>
+                                        <td className="py-4 px-6 text-center">
+                                            <button className="text-gray-400 hover:text-primary transition-colors">
+                                                <Edit2 size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        
+                        {filteredOrders.length === 0 && (
+                            <div className="p-12 text-center text-gray-400">
+                                <p>No orders found in this category.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* --- MENU PACKAGES TAB --- */}
         {activeTab === 'menu' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center mb-6">
@@ -262,7 +387,8 @@ export default function CateringApp() {
           </div>
         )}
 
-        {activeTab !== 'dashboard' && activeTab !== 'menu' && (
+        {/* --- COMING SOON --- */}
+        {activeTab !== 'dashboard' && activeTab !== 'menu' && activeTab !== 'orders' && (
           <div className="flex flex-col items-center justify-center h-96 text-gray-400 animate-in fade-in duration-500">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                <Clock size={32} className="text-gray-300"/>
@@ -288,7 +414,6 @@ export default function CateringApp() {
             </div>
             
             <form onSubmit={handleSavePackage} className="space-y-4">
-              {/* Image Upload Field */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Package Image</label>
                 <div className="flex items-center gap-4">
