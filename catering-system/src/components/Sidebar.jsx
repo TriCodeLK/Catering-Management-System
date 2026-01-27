@@ -1,21 +1,19 @@
 import React from 'react';
-import { LayoutDashboard, FileText, Utensils, Calendar, Settings, ChevronLeft, Crown } from 'lucide-react';
+import { LayoutDashboard, FileText, Utensils, Calendar, Settings, ChevronLeft, Crown, List } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'orders', label: 'Events', icon: Calendar },
-    { id: 'menu', label: 'Menu', icon: Utensils },
-    { id: 'clients', label: 'Clients', icon: FileText },
+    { id: 'orders', label: 'All Orders', icon: List },        // List View එකට
+    { id: 'calendar', label: 'Calendar', icon: Calendar },    // Calendar View එකට (අලුතින් දැම්මා)
+    { id: 'menu', label: 'Menu Packages', icon: Utensils },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    // CHANGE: Used 'bg-gray-900' instead of custom hex to ensure it works
     <aside className="w-64 bg-gray-900 text-white hidden md:flex flex-col h-screen fixed left-0 top-0 z-50">
       {/* Logo Area */}
       <div className="p-8 flex items-center gap-3">
-        {/* CHANGE: Used 'bg-orange-500' */}
         <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
             <Utensils size={20} className="text-white" />
         </div>
