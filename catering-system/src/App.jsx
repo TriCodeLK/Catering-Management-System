@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon, ChevronRight, MapPin, TrendingUp, Utensils, Plus, ChevronDown } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon, ChevronRight, MapPin, TrendingUp, Utensils, Plus, ChevronDown, ChevronLeft } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
-// --- MOCK DATA ---
+// --- MOCK DATA (Updated Dates to YYYY-MM-DD for Calendar) ---
 const INITIAL_PACKAGES = [
   { 
     id: 1, 
@@ -37,8 +37,9 @@ const INITIAL_PACKAGES = [
 ];
 
 const INITIAL_ORDERS = [
-    { id: "ORD-001", customer: "Johnson Wedding Reception", date: "Jan 28, 2026", time: "6:00 PM", location: "Grand Ballroom, Hilton", package: "Grilled Salmon Fillet", pax: 150, status: "Confirmed", total: 6750 },
-    { id: "ORD-002", customer: "Tech Corp Annual Gala", date: "Feb 02, 2026", time: "7:30 PM", location: "Convention Center", package: "Beef Wellington", pax: 300, status: "Confirmed", total: 8500 },
+    { id: "ORD-001", customer: "Johnson Wedding Reception", date: "2026-01-28", time: "18:00", location: "Grand Ballroom, Hilton", package: "Grilled Salmon Fillet", pax: 150, status: "Confirmed", total: 6750 },
+    { id: "ORD-002", customer: "Tech Corp Annual Gala", date: "2026-02-02", time: "19:30", location: "Convention Center", package: "Beef Wellington", pax: 300, status: "Confirmed", total: 8500 },
+    { id: "ORD-003", customer: "City Charity Fundraiser", date: "2026-02-14", time: "17:00", location: "City Hall Garden", package: "Caprese Salad", pax: 500, status: "Pending", total: 7500 },
 ];
 
 // --- COMPONENTS ---
@@ -131,24 +132,19 @@ export default function CateringApp() {
   });
 
   // -- STATES --
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'MENU' or 'ORDER'
+  const [modalType, setModalType] = useState(null);
   
-  // Menu Form State
   const [menuForm, setMenuForm] = useState({ name: '', price: '', description: '', image: '' });
   const [editingMenuId, setEditingMenuId] = useState(null);
 
-  // Order Form State (NEW)
   const [orderForm, setOrderForm] = useState({ 
-    customer: '', 
-    date: '', 
-    time: '', 
-    location: '', 
-    packageId: '', // We store ID to find price later
-    pax: '', 
-    status: 'Pending' 
+    customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' 
   });
+
+  // -- CALENDAR STATE --
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => { localStorage.setItem('catering_packages', JSON.stringify(packages)); }, [packages]);
   useEffect(() => { localStorage.setItem('catering_orders', JSON.stringify(orders)); }, [orders]);
@@ -179,8 +175,6 @@ export default function CateringApp() {
   };
 
   // -- ORDER HANDLERS --
-  
-  // Calculate Total Amount dynamically
   const calculateTotal = () => {
     if (!orderForm.packageId || !orderForm.pax) return 0;
     const selectedPkg = packages.find(p => p.id.toString() === orderForm.packageId.toString());
@@ -193,7 +187,7 @@ export default function CateringApp() {
     const selectedPkg = packages.find(p => p.id.toString() === orderForm.packageId.toString());
     
     const newOrder = {
-        id: `ORD-${Date.now().toString().slice(-4)}`, // Generate simple ID
+        id: `ORD-${Date.now().toString().slice(-4)}`,
         customer: orderForm.customer,
         date: orderForm.date,
         time: orderForm.time,
@@ -204,9 +198,8 @@ export default function CateringApp() {
         total: calculateTotal()
     };
 
-    setOrders([newOrder, ...orders]); // Add to top of list
+    setOrders([newOrder, ...orders]);
     setIsModalOpen(false);
-    // Reset form
     setOrderForm({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
   };
 
@@ -218,16 +211,10 @@ export default function CateringApp() {
     if(window.confirm("Delete this order?")) setOrders(orders.filter((order) => order.id !== id));
   };
 
-  // Helper to open correct modal
   const openMenuModal = (pkg = null) => {
     setModalType('MENU');
-    if (pkg) {
-        setEditingMenuId(pkg.id);
-        setMenuForm(pkg);
-    } else {
-        setEditingMenuId(null);
-        setMenuForm({ name: '', price: '', description: '', image: '' });
-    }
+    if (pkg) { setEditingMenuId(pkg.id); setMenuForm(pkg); } 
+    else { setEditingMenuId(null); setMenuForm({ name: '', price: '', description: '', image: '' }); }
     setIsModalOpen(true);
   };
 
@@ -237,62 +224,84 @@ export default function CateringApp() {
     setIsModalOpen(true);
   };
 
+  // -- CALENDAR LOGIC --
+  const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+
+  const changeMonth = (offset) => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+    const days = [];
+
+    // Empty cells for days before the 1st
+    for (let i = 0; i < firstDay; i++) {
+        days.push(<div key={`empty-${i}`} className="h-32 border border-gray-100 bg-gray-50/30"></div>);
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayOrders = orders.filter(o => o.date === dateStr);
+        const isSelected = selectedDate === dateStr;
+
+        days.push(
+            <div 
+                key={day} 
+                onClick={() => setSelectedDate(dateStr)}
+                className={`h-32 border border-gray-100 p-2 relative group cursor-pointer transition-colors hover:bg-orange-50 ${isSelected ? 'bg-orange-50 ring-2 ring-inset ring-orange-200' : 'bg-white'}`}
+            >
+                <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
+                    dateStr === new Date().toISOString().split('T')[0] ? 'bg-orange-500 text-white' : 'text-gray-700'
+                }`}>
+                    {day}
+                </span>
+                
+                {/* Event Indicators */}
+                <div className="mt-2 space-y-1">
+                    {dayOrders.slice(0, 2).map((order, idx) => (
+                        <div key={idx} className="text-[10px] truncate px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium">
+                            {order.time} - {order.customer}
+                        </div>
+                    ))}
+                    {dayOrders.length > 2 && (
+                        <div className="text-[10px] text-gray-400 pl-1">
+                            +{dayOrders.length - 2} more
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+    return days;
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans flex text-gray-900">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 md:ml-64 p-8 relative">
-        {/* Top Header */}
+        
+        {/* --- DASHBOARD & HEADER --- */}
         {activeTab === 'dashboard' && (
-            <div className="mb-10">
+            <div className="mb-10 animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex items-center gap-2 text-orange-600 font-medium text-sm mb-1">
                     <TrendingUp size={16} />
                     <span>Dashboard Overview</span>
                 </div>
                 <h2 className="text-4xl font-serif font-medium text-gray-900 mb-2">Welcome back, Chef</h2>
-                <p className="text-gray-500">Here's what's happening with your catering business today.</p>
-            </div>
-        )}
-
-        {/* --- DASHBOARD --- */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatCard title="Upcoming Events" value={orders.length} subValue="8%" icon={Calendar} isPrimary={true} />
-              <StatCard title="Total Revenue" value={`$${orders.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`} subValue="12%" icon={DollarSign} />
-              <StatCard title="Active Clients" value="38" subValue="15%" icon={Users} />
-              <StatCard title="Menu Items" value={packages.length} subValue="4 New" icon={Utensils} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex justify-between items-end">
-                        <h3 className="text-xl font-bold font-serif">Upcoming Events</h3>
-                        <button onClick={() => setActiveTab('orders')} className="text-sm font-medium text-orange-600 hover:text-orange-700 flex items-center gap-1">
-                            View all <ChevronRight size={16} />
-                        </button>
-                    </div>
-                    <div className="space-y-4">
-                        {orders.slice(0, 3).map(order => <EventListItem key={order.id} order={order} />)}
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-fit">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
-                            <TrendingUp size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold font-serif text-lg">Popular Items</h3>
-                            <p className="text-xs text-gray-500">Top sellers</p>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        {packages.map((item, index) => <PopularItem key={item.id} item={item} index={index} />)}
-                    </div>
+                
+                {/* Dashboard Stats */}
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <StatCard title="Upcoming Events" value={orders.length} subValue="8%" icon={Calendar} isPrimary={true} />
+                    <StatCard title="Total Revenue" value={`$${orders.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`} subValue="12%" icon={DollarSign} />
+                    <StatCard title="Active Clients" value="38" subValue="15%" icon={Users} />
+                    <StatCard title="Menu Items" value={packages.length} subValue="4 New" icon={Utensils} />
                 </div>
             </div>
-          </div>
         )}
 
         {/* --- MENU TAB --- */}
@@ -322,7 +331,7 @@ export default function CateringApp() {
           </div>
         )}
 
-        {/* --- ORDERS TAB (FULL) --- */}
+        {/* --- ORDERS TAB --- */}
         {activeTab === 'orders' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex justify-between items-center mb-8">
@@ -334,7 +343,6 @@ export default function CateringApp() {
                         <Plus size={20} /> New Event
                     </button>
                 </div>
-
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -383,9 +391,7 @@ export default function CateringApp() {
                                                 <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
                                             </div>
                                         </td>
-                                        <td className="py-5 px-6 text-right font-bold text-gray-900">
-                                            ${order.total.toLocaleString()}
-                                        </td>
+                                        <td className="py-5 px-6 text-right font-bold text-gray-900">${order.total.toLocaleString()}</td>
                                         <td className="py-5 px-6 text-center">
                                             <button onClick={() => handleDeleteOrder(order.id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
                                         </td>
@@ -398,12 +404,80 @@ export default function CateringApp() {
             </div>
         )}
 
+        {/* --- CALENDAR TAB (NEW) --- */}
+        {activeTab === 'calendar' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-[calc(100vh-8rem)]">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 className="text-3xl font-serif font-medium text-gray-900">
+                            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </h2>
+                        <p className="text-gray-500">View your event schedule</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => changeMonth(-1)} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"><ChevronLeft size={20}/></button>
+                        <button onClick={() => changeMonth(1)} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"><ChevronRight size={20}/></button>
+                        <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-black">Today</button>
+                    </div>
+                </div>
+
+                <div className="flex gap-6 h-full">
+                    {/* Calendar Grid */}
+                    <div className="flex-1 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                        <div className="grid grid-cols-7 border-b border-gray-100">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                <div key={day} className="py-3 text-center text-xs font-bold text-gray-400 uppercase">{day}</div>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto">
+                            {renderCalendar()}
+                        </div>
+                    </div>
+
+                    {/* Side Panel for Selected Date */}
+                    {selectedDate && (
+                        <div className="w-80 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 overflow-y-auto animate-in slide-in-from-right-4">
+                            <h3 className="text-lg font-bold font-serif mb-1">
+                                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-6">Events for this day</p>
+
+                            <div className="space-y-4">
+                                {orders.filter(o => o.date === selectedDate).length > 0 ? (
+                                    orders.filter(o => o.date === selectedDate).map(order => (
+                                        <div key={order.id} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 group hover:border-orange-200 transition-colors">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="font-bold text-gray-900 line-clamp-1">{order.customer}</span>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${order.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{order.status}</span>
+                                            </div>
+                                            <div className="text-sm text-gray-500 space-y-1">
+                                                <div className="flex items-center gap-2"><Clock size={14}/> {order.time}</div>
+                                                <div className="flex items-center gap-2"><Utensils size={14}/> {order.package}</div>
+                                                <div className="flex items-center gap-2"><Users size={14}/> {order.pax} Guests</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-10 text-gray-400">
+                                        <Calendar size={32} className="mx-auto mb-2 opacity-20"/>
+                                        <p>No events scheduled.</p>
+                                        <button onClick={() => { setOrderForm({...orderForm, date: selectedDate}); openOrderModal(); }} className="mt-4 text-orange-600 text-sm font-bold hover:underline">
+                                            + Add Event here
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
+
         {/* --- UNIVERSAL MODAL --- */}
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl scale-100 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
               
-              {/* Modal Header */}
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-serif">
                     {modalType === 'MENU' ? (editingMenuId ? 'Edit Item' : 'New Menu Item') : 'Create New Event'}
@@ -411,7 +485,7 @@ export default function CateringApp() {
                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={24} /></button>
               </div>
 
-              {/* --- MENU FORM --- */}
+              {/* MENU FORM */}
               {modalType === 'MENU' && (
                   <form onSubmit={handleSavePackage} className="space-y-5">
                     <div className="flex items-center gap-4">
@@ -430,7 +504,7 @@ export default function CateringApp() {
                   </form>
               )}
 
-              {/* --- ORDER FORM (NEW) --- */}
+              {/* ORDER FORM */}
               {modalType === 'ORDER' && (
                   <form onSubmit={handleSaveOrder} className="space-y-5">
                     <div>
@@ -473,7 +547,6 @@ export default function CateringApp() {
                         </div>
                     </div>
 
-                    {/* Auto Calculation Display */}
                     <div className="bg-orange-50 p-4 rounded-xl flex justify-between items-center border border-orange-100">
                         <span className="text-orange-800 font-bold text-sm">Estimated Total</span>
                         <span className="text-2xl font-serif font-bold text-orange-600">${calculateTotal().toLocaleString()}</span>
