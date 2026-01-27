@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock, Bell, Search, X, Trash2, Edit2, Upload, Image as ImageIcon, ChevronRight, MapPin, TrendingUp, Utensils, Plus, ChevronDown, ChevronLeft } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Search, X, Trash2, Upload, ChevronRight, MapPin, TrendingUp, Utensils, Plus, ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
-// --- MOCK DATA (Updated Dates to YYYY-MM-DD for Calendar) ---
+// --- 1. MOCK DATA (ආරම්භක ඩේටා) ---
 const INITIAL_PACKAGES = [
   { 
     id: 1, 
@@ -23,26 +23,15 @@ const INITIAL_PACKAGES = [
     sales: 189,
     earnings: 7560,
     tag: "Main Course"
-  },
-  { 
-    id: 3, 
-    name: "Caprese Salad", 
-    price: "15", 
-    description: "Fresh tomatoes and mozzarella.", 
-    image: "https://images.unsplash.com/photo-1529312266912-b33cf6227e24?auto=format&fit=crop&q=80&w=1000",
-    sales: 312,
-    earnings: 2808,
-    tag: "Appetizer"
   }
 ];
 
 const INITIAL_ORDERS = [
-    { id: "ORD-001", customer: "Johnson Wedding Reception", date: "2026-01-28", time: "18:00", location: "Grand Ballroom, Hilton", package: "Grilled Salmon Fillet", pax: 150, status: "Confirmed", total: 6750 },
-    { id: "ORD-002", customer: "Tech Corp Annual Gala", date: "2026-02-02", time: "19:30", location: "Convention Center", package: "Beef Wellington", pax: 300, status: "Confirmed", total: 8500 },
-    { id: "ORD-003", customer: "City Charity Fundraiser", date: "2026-02-14", time: "17:00", location: "City Hall Garden", package: "Caprese Salad", pax: 500, status: "Pending", total: 7500 },
+    { id: "ORD-001", customer: "Johnson Wedding", date: "2026-01-28", time: "18:00", location: "Grand Ballroom", package: "Grilled Salmon Fillet", pax: 150, status: "Confirmed", total: 6750 },
+    { id: "ORD-002", customer: "Tech Corp Gala", date: "2026-02-02", time: "19:30", location: "Convention Center", package: "Beef Wellington", pax: 300, status: "Confirmed", total: 8500 }
 ];
 
-// --- COMPONENTS ---
+// --- 2. COMPONENTS (පොඩි කෑලි) ---
 
 const StatCard = ({ title, value, subValue, icon: Icon, isPrimary }) => (
   <div className={`p-6 rounded-3xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
@@ -60,12 +49,9 @@ const StatCard = ({ title, value, subValue, icon: Icon, isPrimary }) => (
         </div>
     </div>
     <div className="flex items-center gap-2">
-        <span className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${
-            isPrimary ? 'bg-white/20 text-white' : 'bg-green-50 text-green-600'
-        }`}>
+        <span className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${isPrimary ? 'bg-white/20 text-white' : 'bg-green-50 text-green-600'}`}>
             <TrendingUp size={12} /> {subValue}
         </span>
-        <span className={`text-xs ${isPrimary ? 'text-orange-100' : 'text-gray-400'}`}>vs last month</span>
     </div>
   </div>
 );
@@ -86,42 +72,30 @@ const EventListItem = ({ order }) => (
             </span>
         </div>
         <div className="flex items-center gap-6 text-sm text-gray-500 mt-4 pt-4 border-t border-gray-50">
-            <div className="flex items-center gap-2">
-                <Calendar size={14} className="text-orange-500" />
-                <span>{order.date}</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <MapPin size={14} className="text-orange-500" />
-                <span>{order.location}</span>
-            </div>
-            <div className="flex items-center gap-2 ml-auto font-medium text-gray-700">
-                <Users size={14} className="text-gray-400" />
-                <span>{order.pax} guests</span>
-            </div>
+            <div className="flex items-center gap-2"><Calendar size={14} className="text-orange-500" /><span>{order.date}</span></div>
+            <div className="flex items-center gap-2"><Users size={14} className="text-gray-400" /><span>{order.pax} guests</span></div>
         </div>
     </div>
 );
 
 const PopularItem = ({ item, index }) => (
     <div className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors">
-        <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
-            {index + 1}
-        </div>
+        <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">{index + 1}</div>
         <div className="flex-1">
             <h5 className="font-bold text-gray-900">{item.name}</h5>
             <p className="text-xs text-gray-500">{item.tag || 'General'}</p>
         </div>
         <div className="text-right">
             <p className="font-bold text-gray-900">{item.sales || 0}</p>
-            <p className="text-xs text-green-600 font-medium">${(item.earnings || 0).toLocaleString()}</p>
         </div>
     </div>
 );
 
+// --- 3. MAIN APPLICATION ---
 export default function CateringApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // -- LOCAL STORAGE --
+  // Local Storage (Data Saving)
   const [packages, setPackages] = useState(() => {
     const saved = localStorage.getItem('catering_packages');
     return saved ? JSON.parse(saved) : INITIAL_PACKAGES;
@@ -131,25 +105,26 @@ export default function CateringApp() {
     return saved ? JSON.parse(saved) : INITIAL_ORDERS;
   });
 
-  // -- STATES --
+  // UI States
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(null);
+  const [modalType, setModalType] = useState(null); // 'MENU' or 'ORDER'
   
+  // Forms
   const [menuForm, setMenuForm] = useState({ name: '', price: '', description: '', image: '' });
   const [editingMenuId, setEditingMenuId] = useState(null);
+  const [orderForm, setOrderForm] = useState({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
 
-  const [orderForm, setOrderForm] = useState({ 
-    customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' 
-  });
-
-  // -- CALENDAR STATE --
+  // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
+  // Auto Save
   useEffect(() => { localStorage.setItem('catering_packages', JSON.stringify(packages)); }, [packages]);
   useEffect(() => { localStorage.setItem('catering_orders', JSON.stringify(orders)); }, [orders]);
 
-  // -- MENU HANDLERS --
+  // --- FUNCTIONS ---
+
+  // Menu Functions
   const handleSavePackage = (e) => {
     e.preventDefault();
     const finalImage = menuForm.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000";
@@ -174,7 +149,14 @@ export default function CateringApp() {
     if(window.confirm("Delete this package?")) setPackages(packages.filter((pkg) => pkg.id !== id));
   };
 
-  // -- ORDER HANDLERS --
+  const openMenuModal = (pkg = null) => {
+    setModalType('MENU');
+    if (pkg) { setEditingMenuId(pkg.id); setMenuForm(pkg); } 
+    else { setEditingMenuId(null); setMenuForm({ name: '', price: '', description: '', image: '' }); }
+    setIsModalOpen(true);
+  };
+
+  // Order Functions
   const calculateTotal = () => {
     if (!orderForm.packageId || !orderForm.pax) return 0;
     const selectedPkg = packages.find(p => p.id.toString() === orderForm.packageId.toString());
@@ -185,7 +167,6 @@ export default function CateringApp() {
   const handleSaveOrder = (e) => {
     e.preventDefault();
     const selectedPkg = packages.find(p => p.id.toString() === orderForm.packageId.toString());
-    
     const newOrder = {
         id: `ORD-${Date.now().toString().slice(-4)}`,
         customer: orderForm.customer,
@@ -197,7 +178,6 @@ export default function CateringApp() {
         status: orderForm.status,
         total: calculateTotal()
     };
-
     setOrders([newOrder, ...orders]);
     setIsModalOpen(false);
     setOrderForm({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
@@ -211,67 +191,32 @@ export default function CateringApp() {
     if(window.confirm("Delete this order?")) setOrders(orders.filter((order) => order.id !== id));
   };
 
-  const openMenuModal = (pkg = null) => {
-    setModalType('MENU');
-    if (pkg) { setEditingMenuId(pkg.id); setMenuForm(pkg); } 
-    else { setEditingMenuId(null); setMenuForm({ name: '', price: '', description: '', image: '' }); }
-    setIsModalOpen(true);
-  };
-
   const openOrderModal = () => {
     setModalType('ORDER');
     setOrderForm({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
     setIsModalOpen(true);
   };
 
-  // -- CALENDAR LOGIC --
+  // Calendar Logic
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-
-  const changeMonth = (offset) => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
-  };
+  const changeMonth = (offset) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
 
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
-
-    // Empty cells for days before the 1st
-    for (let i = 0; i < firstDay; i++) {
-        days.push(<div key={`empty-${i}`} className="h-32 border border-gray-100 bg-gray-50/30"></div>);
-    }
-
-    // Days of the month
+    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} className="h-32 border border-gray-100 bg-gray-50/30"></div>);
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayOrders = orders.filter(o => o.date === dateStr);
-        const isSelected = selectedDate === dateStr;
-
         days.push(
-            <div 
-                key={day} 
-                onClick={() => setSelectedDate(dateStr)}
-                className={`h-32 border border-gray-100 p-2 relative group cursor-pointer transition-colors hover:bg-orange-50 ${isSelected ? 'bg-orange-50 ring-2 ring-inset ring-orange-200' : 'bg-white'}`}
-            >
-                <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
-                    dateStr === new Date().toISOString().split('T')[0] ? 'bg-orange-500 text-white' : 'text-gray-700'
-                }`}>
-                    {day}
-                </span>
-                
-                {/* Event Indicators */}
+            <div key={day} onClick={() => setSelectedDate(dateStr)} className={`h-32 border border-gray-100 p-2 relative group cursor-pointer transition-colors hover:bg-orange-50 ${selectedDate === dateStr ? 'bg-orange-50 ring-2 ring-orange-200' : 'bg-white'}`}>
+                <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${dateStr === new Date().toISOString().split('T')[0] ? 'bg-orange-500 text-white' : 'text-gray-700'}`}>{day}</span>
                 <div className="mt-2 space-y-1">
-                    {dayOrders.slice(0, 2).map((order, idx) => (
-                        <div key={idx} className="text-[10px] truncate px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium">
-                            {order.time} - {order.customer}
-                        </div>
+                    {dayOrders.map((order, idx) => (
+                        <div key={idx} className="text-[10px] truncate px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium">{order.time} - {order.customer}</div>
                     ))}
-                    {dayOrders.length > 2 && (
-                        <div className="text-[10px] text-gray-400 pl-1">
-                            +{dayOrders.length - 2} more
-                        </div>
-                    )}
                 </div>
             </div>
         );
@@ -285,45 +230,47 @@ export default function CateringApp() {
 
       <main className="flex-1 md:ml-64 p-8 relative">
         
-        {/* --- DASHBOARD & HEADER --- */}
+        {/* --- DASHBOARD TAB --- */}
         {activeTab === 'dashboard' && (
-            <div className="mb-10 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex items-center gap-2 text-orange-600 font-medium text-sm mb-1">
-                    <TrendingUp size={16} />
-                    <span>Dashboard Overview</span>
+            <div className="space-y-8 animate-in fade-in">
+                <div className="mb-8">
+                    <h2 className="text-4xl font-serif font-medium text-gray-900 mb-2">Welcome back, Chef</h2>
+                    <p className="text-gray-500">Dashboard Overview</p>
                 </div>
-                <h2 className="text-4xl font-serif font-medium text-gray-900 mb-2">Welcome back, Chef</h2>
-                
-                {/* Dashboard Stats */}
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <StatCard title="Upcoming Events" value={orders.length} subValue="8%" icon={Calendar} isPrimary={true} />
                     <StatCard title="Total Revenue" value={`$${orders.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`} subValue="12%" icon={DollarSign} />
                     <StatCard title="Active Clients" value="38" subValue="15%" icon={Users} />
                     <StatCard title="Menu Items" value={packages.length} subValue="4 New" icon={Utensils} />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-4">
+                        <h3 className="text-xl font-bold font-serif">Upcoming Events</h3>
+                        {orders.slice(0, 3).map(order => <EventListItem key={order.id} order={order} />)}
+                    </div>
+                    <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-fit">
+                        <h3 className="font-bold font-serif text-lg mb-4">Popular Items</h3>
+                        {packages.map((item, index) => <PopularItem key={item.id} item={item} index={index} />)}
+                    </div>
                 </div>
             </div>
         )}
 
         {/* --- MENU TAB --- */}
         {activeTab === 'menu' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="animate-in fade-in">
             <div className="flex justify-between items-center mb-8">
                <h2 className="text-3xl font-serif font-medium">Menu Packages</h2>
-               <button onClick={() => openMenuModal()} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:bg-black transition-all">
-                  + Create Package
-               </button>
+               <button onClick={() => openMenuModal()} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:bg-black">+ Create Package</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {packages.map((pkg) => (
-                <div key={pkg.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all group cursor-pointer" onClick={() => openMenuModal(pkg)}>
-                  <div className="h-48 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
-                    <img src={pkg.image} alt={pkg.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
+                <div key={pkg.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all cursor-pointer" onClick={() => openMenuModal(pkg)}>
+                  <div className="h-48 bg-gray-100 rounded-xl mb-4 overflow-hidden"><img src={pkg.image} alt={pkg.name} className="w-full h-full object-cover" /></div>
                   <h4 className="font-bold text-lg font-serif">{pkg.name}</h4>
-                  <p className="text-gray-500 text-sm mb-3 line-clamp-2">{pkg.description}</p>
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+                  <div className="flex justify-between items-center pt-3 mt-2 border-t border-gray-50">
                      <span className="font-bold text-lg text-orange-600">${pkg.price}</span>
-                     <button onClick={(e) => {e.stopPropagation(); handleDeletePackage(pkg.id)}} className="p-2 text-gray-400 hover:text-red-500"><Trash2 size={16}/></button>
+                     <button onClick={(e) => {e.stopPropagation(); handleDeletePackage(pkg.id)}} className="text-red-500 hover:bg-red-50 p-2 rounded"><Trash2 size={16}/></button>
                   </div>
                 </div>
               ))}
@@ -333,233 +280,125 @@ export default function CateringApp() {
 
         {/* --- ORDERS TAB --- */}
         {activeTab === 'orders' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="animate-in fade-in">
                 <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 className="text-3xl font-serif font-medium">Event Management</h2>
-                        <p className="text-gray-500 mt-1">Manage bookings and schedules</p>
-                    </div>
-                    <button onClick={openOrderModal} className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all flex items-center gap-2">
-                        <Plus size={20} /> New Event
-                    </button>
+                    <h2 className="text-3xl font-serif font-medium">Event Management</h2>
+                    <button onClick={openOrderModal} className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-orange-600 flex items-center gap-2"><Plus size={20} /> New Event</button>
                 </div>
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 text-xs uppercase tracking-wider font-bold">
-                                <tr>
-                                    <th className="py-5 px-6">Customer</th>
-                                    <th className="py-5 px-6">Date & Time</th>
-                                    <th className="py-5 px-6">Package</th>
-                                    <th className="py-5 px-6">Status</th>
-                                    <th className="py-5 px-6 text-right">Total</th>
-                                    <th className="py-5 px-6 text-center">Action</th>
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 text-xs uppercase font-bold">
+                            <tr><th className="py-5 px-6">Customer</th><th className="py-5 px-6">Date</th><th className="py-5 px-6">Package</th><th className="py-5 px-6">Status</th><th className="py-5 px-6 text-right">Total</th><th className="py-5 px-6 text-center">Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {orders.map((order) => (
+                                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                    <td className="py-5 px-6 font-bold">{order.customer}</td>
+                                    <td className="py-5 px-6 text-sm">{order.date}<br/><span className="text-gray-400">{order.time}</span></td>
+                                    <td className="py-5 px-6">{order.package}</td>
+                                    <td className="py-5 px-6">
+                                        <select value={order.status} onChange={(e) => handleStatusChange(order.id, e.target.value)} className="bg-gray-100 rounded px-2 py-1 text-xs font-bold">
+                                            <option value="Pending">Pending</option><option value="Confirmed">Confirmed</option><option value="Completed">Completed</option>
+                                        </select>
+                                    </td>
+                                    <td className="py-5 px-6 text-right font-bold">${order.total.toLocaleString()}</td>
+                                    <td className="py-5 px-6 text-center"><button onClick={() => handleDeleteOrder(order.id)} className="text-red-400 hover:text-red-600"><Trash2 size={18} /></button></td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {orders.map((order) => (
-                                    <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-5 px-6">
-                                            <p className="font-bold text-gray-900">{order.customer}</p>
-                                            <p className="text-xs text-gray-400 flex items-center gap-1 mt-1"><MapPin size={10} /> {order.location}</p>
-                                        </td>
-                                        <td className="py-5 px-6 text-sm text-gray-600">
-                                            <div className="flex flex-col">
-                                                <span className="font-medium">{order.date}</span>
-                                                <span className="text-xs text-gray-400">{order.time}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-5 px-6">
-                                            <span className="block font-medium text-gray-800">{order.package}</span>
-                                            <span className="text-xs text-gray-500">{order.pax} Pax</span>
-                                        </td>
-                                        <td className="py-5 px-6">
-                                            <div className="relative w-32">
-                                                <select
-                                                    value={order.status}
-                                                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                                    className={`w-full appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer focus:ring-2 focus:ring-orange-500/20 ${
-                                                        order.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 
-                                                        order.status === 'Completed' ? 'bg-blue-100 text-blue-700' :
-                                                        'bg-orange-100 text-orange-700'
-                                                    }`}
-                                                >
-                                                    <option value="Pending">Pending</option>
-                                                    <option value="Confirmed">Confirmed</option>
-                                                    <option value="Completed">Completed</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-                                            </div>
-                                        </td>
-                                        <td className="py-5 px-6 text-right font-bold text-gray-900">${order.total.toLocaleString()}</td>
-                                        <td className="py-5 px-6 text-center">
-                                            <button onClick={() => handleDeleteOrder(order.id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         )}
 
-        {/* --- CALENDAR TAB (NEW) --- */}
+        {/* --- CALENDAR TAB --- */}
         {activeTab === 'calendar' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-[calc(100vh-8rem)]">
+            <div className="animate-in fade-in flex flex-col h-[calc(100vh-8rem)]">
                 <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-3xl font-serif font-medium text-gray-900">
-                            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                        </h2>
-                        <p className="text-gray-500">View your event schedule</p>
-                    </div>
+                    <h2 className="text-3xl font-serif font-medium">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
                     <div className="flex gap-2">
-                        <button onClick={() => changeMonth(-1)} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"><ChevronLeft size={20}/></button>
-                        <button onClick={() => changeMonth(1)} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"><ChevronRight size={20}/></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-black">Today</button>
+                        <button onClick={() => changeMonth(-1)} className="p-2 border rounded hover:bg-gray-50"><ChevronLeft size={20}/></button>
+                        <button onClick={() => changeMonth(1)} className="p-2 border rounded hover:bg-gray-50"><ChevronRight size={20}/></button>
                     </div>
                 </div>
-
                 <div className="flex gap-6 h-full">
-                    {/* Calendar Grid */}
-                    <div className="flex-1 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                        <div className="grid grid-cols-7 border-b border-gray-100">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="py-3 text-center text-xs font-bold text-gray-400 uppercase">{day}</div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto">
-                            {renderCalendar()}
-                        </div>
+                    <div className="flex-1 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+                        <div className="grid grid-cols-7 border-b p-2 font-bold text-gray-400 text-center">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}</div>
+                        <div className="grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto">{renderCalendar()}</div>
                     </div>
-
-                    {/* Side Panel for Selected Date */}
                     {selectedDate && (
-                        <div className="w-80 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 overflow-y-auto animate-in slide-in-from-right-4">
-                            <h3 className="text-lg font-bold font-serif mb-1">
-                                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                            </h3>
-                            <p className="text-xs text-gray-500 mb-6">Events for this day</p>
-
-                            <div className="space-y-4">
-                                {orders.filter(o => o.date === selectedDate).length > 0 ? (
-                                    orders.filter(o => o.date === selectedDate).map(order => (
-                                        <div key={order.id} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 group hover:border-orange-200 transition-colors">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="font-bold text-gray-900 line-clamp-1">{order.customer}</span>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${order.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{order.status}</span>
-                                            </div>
-                                            <div className="text-sm text-gray-500 space-y-1">
-                                                <div className="flex items-center gap-2"><Clock size={14}/> {order.time}</div>
-                                                <div className="flex items-center gap-2"><Utensils size={14}/> {order.package}</div>
-                                                <div className="flex items-center gap-2"><Users size={14}/> {order.pax} Guests</div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center py-10 text-gray-400">
-                                        <Calendar size={32} className="mx-auto mb-2 opacity-20"/>
-                                        <p>No events scheduled.</p>
-                                        <button onClick={() => { setOrderForm({...orderForm, date: selectedDate}); openOrderModal(); }} className="mt-4 text-orange-600 text-sm font-bold hover:underline">
-                                            + Add Event here
-                                        </button>
+                        <div className="w-80 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 overflow-y-auto">
+                            <h3 className="text-lg font-bold font-serif mb-4">{selectedDate}</h3>
+                            {orders.filter(o => o.date === selectedDate).length > 0 ? (
+                                orders.filter(o => o.date === selectedDate).map(order => (
+                                    <div key={order.id} className="p-4 mb-2 rounded-xl bg-gray-50 border">
+                                        <div className="font-bold">{order.customer}</div>
+                                        <div className="text-xs text-gray-500">{order.package}</div>
                                     </div>
-                                )}
-                            </div>
+                                ))
+                            ) : (<p className="text-gray-400 text-center">No events.</p>)}
                         </div>
                     )}
                 </div>
             </div>
         )}
 
-        {/* --- UNIVERSAL MODAL --- */}
+        {/* --- SETTINGS TAB (RESET) --- */}
+        {activeTab === 'settings' && (
+            <div className="animate-in fade-in max-w-xl">
+                <h2 className="text-3xl font-serif font-medium mb-8">Settings</h2>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex gap-4">
+                    <div className="p-3 bg-red-50 text-red-600 rounded-xl"><LogOut size={24}/></div>
+                    <div>
+                        <h3 className="font-bold text-lg">Reset Application Data</h3>
+                        <p className="text-sm text-gray-500 mb-4">Clear all saved orders and menu items.</p>
+                        <button onClick={() => { if(window.confirm("Delete all data?")) { localStorage.removeItem('catering_packages'); localStorage.removeItem('catering_orders'); window.location.reload(); } }} className="px-4 py-2 bg-red-50 text-red-600 font-bold rounded-lg border border-red-100">Reset Data</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* --- MODAL --- */}
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl scale-100 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
-              
+            <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-serif">
-                    {modalType === 'MENU' ? (editingMenuId ? 'Edit Item' : 'New Menu Item') : 'Create New Event'}
-                </h3>
+                <h3 className="text-2xl font-serif">{modalType === 'MENU' ? 'Menu Item' : 'New Event'}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={24} /></button>
               </div>
 
-              {/* MENU FORM */}
               {modalType === 'MENU' && (
-                  <form onSubmit={handleSavePackage} className="space-y-5">
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-                            {menuForm.image && <img src={menuForm.image} className="w-full h-full object-cover" />}
-                        </div>
-                        <label className="flex-1 cursor-pointer border-2 border-dashed border-gray-200 rounded-xl h-20 flex flex-col items-center justify-center hover:border-orange-500 hover:bg-orange-50 text-gray-500 transition-all">
-                            <Upload size={16} /> <span className="text-xs font-bold mt-1">Upload Photo</span>
-                            <input type="file" className="hidden" onChange={handleImageUpload} />
-                        </label>
+                  <form onSubmit={handleSavePackage} className="space-y-4">
+                    <div className="flex gap-4 items-center">
+                        <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden">{menuForm.image && <img src={menuForm.image} className="w-full h-full object-cover"/>}</div>
+                        <label className="flex-1 cursor-pointer border-2 border-dashed rounded-xl h-20 flex items-center justify-center hover:bg-gray-50"><Upload size={16}/> <span className="ml-2 text-xs font-bold">Upload</span><input type="file" className="hidden" onChange={handleImageUpload}/></label>
                     </div>
-                    <input type="text" placeholder="Item Name" required className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={menuForm.name} onChange={e => setMenuForm({...menuForm, name: e.target.value})} />
-                    <input type="number" placeholder="Price ($)" required className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={menuForm.price} onChange={e => setMenuForm({...menuForm, price: e.target.value})} />
-                    <textarea placeholder="Description" required className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20 h-24" value={menuForm.description} onChange={e => setMenuForm({...menuForm, description: e.target.value})}></textarea>
-                    <button type="submit" className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-black">{editingMenuId ? 'Update Item' : 'Save Item'}</button>
+                    <input type="text" placeholder="Name" required className="w-full p-3 bg-gray-50 rounded-xl" value={menuForm.name} onChange={e => setMenuForm({...menuForm, name: e.target.value})} />
+                    <input type="number" placeholder="Price" required className="w-full p-3 bg-gray-50 rounded-xl" value={menuForm.price} onChange={e => setMenuForm({...menuForm, price: e.target.value})} />
+                    <textarea placeholder="Description" className="w-full p-3 bg-gray-50 rounded-xl" value={menuForm.description} onChange={e => setMenuForm({...menuForm, description: e.target.value})}></textarea>
+                    <button type="submit" className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl">Save Item</button>
                   </form>
               )}
 
-              {/* ORDER FORM */}
               {modalType === 'ORDER' && (
-                  <form onSubmit={handleSaveOrder} className="space-y-5">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Client Details</label>
-                        <input type="text" placeholder="Client Name" required className="w-full mt-1 p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={orderForm.customer} onChange={e => setOrderForm({...orderForm, customer: e.target.value})} />
+                  <form onSubmit={handleSaveOrder} className="space-y-4">
+                    <input type="text" placeholder="Client Name" required className="w-full p-3 bg-gray-50 rounded-xl" value={orderForm.customer} onChange={e => setOrderForm({...orderForm, customer: e.target.value})} />
+                    <div className="flex gap-4">
+                        <input type="date" required className="w-full p-3 bg-gray-50 rounded-xl" value={orderForm.date} onChange={e => setOrderForm({...orderForm, date: e.target.value})} />
+                        <input type="time" required className="w-full p-3 bg-gray-50 rounded-xl" value={orderForm.time} onChange={e => setOrderForm({...orderForm, time: e.target.value})} />
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Date</label>
-                            <input type="date" required className="w-full mt-1 p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={orderForm.date} onChange={e => setOrderForm({...orderForm, date: e.target.value})} />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Time</label>
-                            <input type="time" required className="w-full mt-1 p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={orderForm.time} onChange={e => setOrderForm({...orderForm, time: e.target.value})} />
-                        </div>
+                    <input type="text" placeholder="Location" required className="w-full p-3 bg-gray-50 rounded-xl" value={orderForm.location} onChange={e => setOrderForm({...orderForm, location: e.target.value})} />
+                    <div className="flex gap-4">
+                        <select required className="w-full p-3 bg-gray-50 rounded-xl" value={orderForm.packageId} onChange={e => setOrderForm({...orderForm, packageId: e.target.value})}><option value="">Select Menu</option>{packages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+                        <input type="number" placeholder="Pax" required className="w-full p-3 bg-gray-50 rounded-xl" value={orderForm.pax} onChange={e => setOrderForm({...orderForm, pax: e.target.value})} />
                     </div>
-
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Venue</label>
-                        <input type="text" placeholder="Location / Address" required className="w-full mt-1 p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={orderForm.location} onChange={e => setOrderForm({...orderForm, location: e.target.value})} />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Select Package</label>
-                            <div className="relative">
-                                <select required className="w-full mt-1 p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20 appearance-none" value={orderForm.packageId} onChange={e => setOrderForm({...orderForm, packageId: e.target.value})}>
-                                    <option value="">Choose a Menu...</option>
-                                    {packages.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name} - ${p.price}/head</option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={16} className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-gray-400 pointer-events-none"/>
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Guests</label>
-                            <input type="number" placeholder="Pax" required className="w-full mt-1 p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-orange-500/20" value={orderForm.pax} onChange={e => setOrderForm({...orderForm, pax: e.target.value})} />
-                        </div>
-                    </div>
-
-                    <div className="bg-orange-50 p-4 rounded-xl flex justify-between items-center border border-orange-100">
-                        <span className="text-orange-800 font-bold text-sm">Estimated Total</span>
-                        <span className="text-2xl font-serif font-bold text-orange-600">${calculateTotal().toLocaleString()}</span>
-                    </div>
-
-                    <button type="submit" className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/20">Confirm Booking</button>
+                    <div className="p-4 bg-orange-50 rounded-xl flex justify-between font-bold text-orange-600"><span>Total</span><span>${calculateTotal().toLocaleString()}</span></div>
+                    <button type="submit" className="w-full py-3 bg-orange-500 text-white font-bold rounded-xl">Confirm Booking</button>
                   </form>
               )}
-
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
