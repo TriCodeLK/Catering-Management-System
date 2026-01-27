@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock, Search, X, Trash2, Upload, ChevronRight, MapPin, TrendingUp, Utensils, Plus, ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Search, X, Trash2, Upload, ChevronRight, MapPin, TrendingUp, Utensils, Plus, ChevronDown, ChevronLeft, LogOut, Printer } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 
-// --- 1. MOCK DATA (ආරම්භක ඩේටා) ---
+// --- MOCK DATA ---
 const INITIAL_PACKAGES = [
   { 
     id: 1, 
@@ -31,8 +31,7 @@ const INITIAL_ORDERS = [
     { id: "ORD-002", customer: "Tech Corp Gala", date: "2026-02-02", time: "19:30", location: "Convention Center", package: "Beef Wellington", pax: 300, status: "Confirmed", total: 8500 }
 ];
 
-// --- 2. COMPONENTS (පොඩි කෑලි) ---
-
+// --- COMPONENTS ---
 const StatCard = ({ title, value, subValue, icon: Icon, isPrimary }) => (
   <div className={`p-6 rounded-3xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
     isPrimary 
@@ -87,15 +86,16 @@ const PopularItem = ({ item, index }) => (
         </div>
         <div className="text-right">
             <p className="font-bold text-gray-900">{item.sales || 0}</p>
+            <p className="text-xs text-green-600 font-medium">${(item.earnings || 0).toLocaleString()}</p>
         </div>
     </div>
 );
 
-// --- 3. MAIN APPLICATION ---
+// --- MAIN APP ---
 export default function CateringApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Local Storage (Data Saving)
+  // Data
   const [packages, setPackages] = useState(() => {
     const saved = localStorage.getItem('catering_packages');
     return saved ? JSON.parse(saved) : INITIAL_PACKAGES;
@@ -107,24 +107,24 @@ export default function CateringApp() {
 
   // UI States
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'MENU' or 'ORDER'
+  const [modalType, setModalType] = useState(null);
+  const [invoiceOrder, setInvoiceOrder] = useState(null); // State for Invoice
   
   // Forms
   const [menuForm, setMenuForm] = useState({ name: '', price: '', description: '', image: '' });
   const [editingMenuId, setEditingMenuId] = useState(null);
   const [orderForm, setOrderForm] = useState({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
 
-  // Calendar State
+  // Calendar
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // Auto Save
   useEffect(() => { localStorage.setItem('catering_packages', JSON.stringify(packages)); }, [packages]);
   useEffect(() => { localStorage.setItem('catering_orders', JSON.stringify(orders)); }, [orders]);
 
-  // --- FUNCTIONS ---
-
-  // Menu Functions
+  // -- FUNCTIONS --
+  
+  // Menu
   const handleSavePackage = (e) => {
     e.preventDefault();
     const finalImage = menuForm.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000";
@@ -135,7 +135,6 @@ export default function CateringApp() {
     }
     setIsModalOpen(false);
   };
-
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -144,11 +143,9 @@ export default function CateringApp() {
       reader.readAsDataURL(file);
     }
   };
-
   const handleDeletePackage = (id) => {
     if(window.confirm("Delete this package?")) setPackages(packages.filter((pkg) => pkg.id !== id));
   };
-
   const openMenuModal = (pkg = null) => {
     setModalType('MENU');
     if (pkg) { setEditingMenuId(pkg.id); setMenuForm(pkg); } 
@@ -156,14 +153,13 @@ export default function CateringApp() {
     setIsModalOpen(true);
   };
 
-  // Order Functions
+  // Order
   const calculateTotal = () => {
     if (!orderForm.packageId || !orderForm.pax) return 0;
     const selectedPkg = packages.find(p => p.id.toString() === orderForm.packageId.toString());
     if (!selectedPkg) return 0;
     return selectedPkg.price * orderForm.pax;
   };
-
   const handleSaveOrder = (e) => {
     e.preventDefault();
     const selectedPkg = packages.find(p => p.id.toString() === orderForm.packageId.toString());
@@ -182,26 +178,22 @@ export default function CateringApp() {
     setIsModalOpen(false);
     setOrderForm({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
   };
-
   const handleStatusChange = (id, newStatus) => {
     setOrders(orders.map(order => order.id === id ? { ...order, status: newStatus } : order));
   };
-
   const handleDeleteOrder = (id) => {
     if(window.confirm("Delete this order?")) setOrders(orders.filter((order) => order.id !== id));
   };
-
   const openOrderModal = () => {
     setModalType('ORDER');
     setOrderForm({ customer: '', date: '', time: '', location: '', packageId: '', pax: '', status: 'Pending' });
     setIsModalOpen(true);
   };
 
-  // Calendar Logic
+  // Calendar
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   const changeMonth = (offset) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
-
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
@@ -226,17 +218,25 @@ export default function CateringApp() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans flex text-gray-900">
+      
+      {/* PRINT STYLES - Hide everything except invoice when printing */}
+      <style>{`
+        @media print {
+            body * { visibility: hidden; }
+            #invoice-modal, #invoice-modal * { visibility: visible; }
+            #invoice-modal { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 9999; background: white; overflow: hidden; padding: 20px; }
+            .no-print { display: none !important; }
+        }
+      `}</style>
+
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 md:ml-64 p-8 relative">
         
-        {/* --- DASHBOARD TAB --- */}
+        {/* DASHBOARD */}
         {activeTab === 'dashboard' && (
             <div className="space-y-8 animate-in fade-in">
-                <div className="mb-8">
-                    <h2 className="text-4xl font-serif font-medium text-gray-900 mb-2">Welcome back, Chef</h2>
-                    <p className="text-gray-500">Dashboard Overview</p>
-                </div>
+                <div className="mb-8"><h2 className="text-4xl font-serif font-medium text-gray-900 mb-2">Welcome back, Chef</h2><p className="text-gray-500">Dashboard Overview</p></div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <StatCard title="Upcoming Events" value={orders.length} subValue="8%" icon={Calendar} isPrimary={true} />
                     <StatCard title="Total Revenue" value={`$${orders.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`} subValue="12%" icon={DollarSign} />
@@ -256,7 +256,7 @@ export default function CateringApp() {
             </div>
         )}
 
-        {/* --- MENU TAB --- */}
+        {/* MENU */}
         {activeTab === 'menu' && (
           <div className="animate-in fade-in">
             <div className="flex justify-between items-center mb-8">
@@ -278,7 +278,7 @@ export default function CateringApp() {
           </div>
         )}
 
-        {/* --- ORDERS TAB --- */}
+        {/* ORDERS */}
         {activeTab === 'orders' && (
             <div className="animate-in fade-in">
                 <div className="flex justify-between items-center mb-8">
@@ -302,7 +302,12 @@ export default function CateringApp() {
                                         </select>
                                     </td>
                                     <td className="py-5 px-6 text-right font-bold">${order.total.toLocaleString()}</td>
-                                    <td className="py-5 px-6 text-center"><button onClick={() => handleDeleteOrder(order.id)} className="text-red-400 hover:text-red-600"><Trash2 size={18} /></button></td>
+                                    <td className="py-5 px-6 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button onClick={() => setInvoiceOrder(order)} className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors" title="Print Invoice"><Printer size={18} /></button>
+                                            <button onClick={() => handleDeleteOrder(order.id)} className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={18} /></button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -311,7 +316,7 @@ export default function CateringApp() {
             </div>
         )}
 
-        {/* --- CALENDAR TAB --- */}
+        {/* CALENDAR */}
         {activeTab === 'calendar' && (
             <div className="animate-in fade-in flex flex-col h-[calc(100vh-8rem)]">
                 <div className="flex justify-between items-center mb-6">
@@ -343,7 +348,7 @@ export default function CateringApp() {
             </div>
         )}
 
-        {/* --- SETTINGS TAB (RESET) --- */}
+        {/* SETTINGS */}
         {activeTab === 'settings' && (
             <div className="animate-in fade-in max-w-xl">
                 <h2 className="text-3xl font-serif font-medium mb-8">Settings</h2>
@@ -358,9 +363,92 @@ export default function CateringApp() {
             </div>
         )}
 
-        {/* --- MODAL --- */}
+        {/* --- INVOICE MODAL (NEW) --- */}
+        {invoiceOrder && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in">
+                <div id="invoice-modal" className="bg-white rounded-none md:rounded-3xl w-full max-w-2xl p-0 md:p-8 shadow-2xl h-full md:h-auto overflow-y-auto">
+                    {/* Invoice Content */}
+                    <div className="p-8 bg-white" style={{ minHeight: '800px' }}>
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-12 border-b border-gray-100 pb-8">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2 text-orange-600">
+                                    <Utensils size={28} />
+                                    <h1 className="text-3xl font-serif font-bold text-gray-900">CaterPro</h1>
+                                </div>
+                                <p className="text-sm text-gray-500">123 Culinary Road, Colombo 07</p>
+                                <p className="text-sm text-gray-500">contact@caterpro.lk | +94 77 123 4567</p>
+                            </div>
+                            <div className="text-right">
+                                <h2 className="text-4xl font-serif font-bold text-gray-200 uppercase tracking-widest">Invoice</h2>
+                                <p className="font-bold text-gray-900 mt-2">#{invoiceOrder.id}</p>
+                                <p className="text-sm text-gray-500">Date: {invoiceOrder.date}</p>
+                            </div>
+                        </div>
+
+                        {/* Bill To */}
+                        <div className="mb-12">
+                            <h3 className="text-xs font-bold uppercase text-gray-400 mb-2">Bill To</h3>
+                            <h2 className="text-xl font-bold text-gray-900">{invoiceOrder.customer}</h2>
+                            <p className="text-gray-500 text-sm mt-1">{invoiceOrder.location}</p>
+                        </div>
+
+                        {/* Table */}
+                        <table className="w-full mb-12">
+                            <thead>
+                                <tr className="border-b-2 border-gray-100 text-left">
+                                    <th className="py-3 text-xs font-bold text-gray-400 uppercase">Description</th>
+                                    <th className="py-3 text-xs font-bold text-gray-400 uppercase text-center">Pax</th>
+                                    <th className="py-3 text-xs font-bold text-gray-400 uppercase text-right">Unit Price</th>
+                                    <th className="py-3 text-xs font-bold text-gray-400 uppercase text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="border-b border-gray-50">
+                                    <td className="py-4 font-bold text-gray-900">
+                                        {invoiceOrder.package}
+                                        <p className="text-xs text-gray-400 font-normal mt-1">Full catering service including service charge</p>
+                                    </td>
+                                    <td className="py-4 text-center text-gray-600">{invoiceOrder.pax}</td>
+                                    <td className="py-4 text-right text-gray-600">${(invoiceOrder.total / invoiceOrder.pax).toFixed(2)}</td>
+                                    <td className="py-4 text-right font-bold text-gray-900">${invoiceOrder.total.toLocaleString()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        {/* Totals */}
+                        <div className="flex justify-end mb-12">
+                            <div className="w-64">
+                                <div className="flex justify-between py-2 border-b border-gray-50">
+                                    <span className="text-gray-500 text-sm">Subtotal</span>
+                                    <span className="font-bold text-gray-900">${invoiceOrder.total.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between py-4">
+                                    <span className="text-lg font-serif font-bold text-gray-900">Total</span>
+                                    <span className="text-lg font-serif font-bold text-orange-600">${invoiceOrder.total.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="border-t border-gray-100 pt-8 text-center">
+                            <p className="text-sm font-bold text-gray-900 mb-1">Thank you for your business!</p>
+                            <p className="text-xs text-gray-500">Please make payments within 14 days. Cheques payable to "CaterPro Pvt Ltd".</p>
+                        </div>
+                    </div>
+
+                    {/* Actions (Hidden on Print) */}
+                    <div className="no-print p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0">
+                        <button onClick={() => setInvoiceOrder(null)} className="px-6 py-2 bg-white border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-100">Close</button>
+                        <button onClick={() => window.print()} className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-black flex items-center gap-2"><Printer size={18}/> Print Invoice</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* --- UNIVERSAL MODAL (CREATE/EDIT) --- */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="fixed inset-0 z-[50] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-serif">{modalType === 'MENU' ? 'Menu Item' : 'New Event'}</h3>
